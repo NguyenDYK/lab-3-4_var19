@@ -1,0 +1,68 @@
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+k = int(input("Введите число K:"))
+n = int(input("Введите число N:"))
+
+a = np.random.randint(-10.0, 10.0, (n, n))
+print("Матрица A:\n", a)
+f = a.copy()
+b = np.array(a[:n//2, :n//2])
+c = np.array(a[:n//2, n//2+n%2:])
+e = np.array(a[n//2+n%2:, n//2+n%2:])
+print("Матрица B:\n", b)
+print("Матрица C:\n", c)
+print("Матрица E:\n", e)
+n1 = n//2+n%2
+n1 = n1//2+n1%2
+arr_in_odd_columns = np.array(e[1:: 2, :])
+arr_in_odd_rows = np.array(e[:, 1::2])
+count_zero_in_odd_columns = np.count_nonzero(arr_in_odd_columns == 0)
+arr_in_odd_rows = np.prod(arr_in_odd_rows)
+#print("\nколичество нулей в нечетных столбцах:", count_zero_in_odd_columns, "\nпроизведение чисел в нечетных строках:",arr_in_odd_rows)
+if count_zero_in_odd_columns*k > arr_in_odd_rows:
+    f[:n//2, :n//2] = np.array(c[::, ::-1])
+    f[:n//2, n//2+n%2:] = np.array(b[::, ::-1])
+else:
+    f[:n//2, :n//2] = e
+    f[n//2+n%2:, n//2+n%2:] = b
+print("Матрица F:\n", f)
+det_A = np.linalg.det(a)
+sum_diagonal_elements = np.trace(f) + np.trace(np.flip(f, axis=0))
+try:
+    if det_A > sum_diagonal_elements:
+      print("A*A^T-K*F^-1:\n", a*a.transpose()-k*np.linalg.inv(f))
+    else:
+        G = np.tril(a)
+        print("(A^-1+G-F^T)*K:\n", np.linalg.inv(a)+G-f.transpose())
+except np.linalgError:
+    print("Одна из матриц является вырожденной(определитель = 0), поэтому обратную матрицу найти невозможно.")
+
+print("\nМатрица, которая используется при построение графиков:\n", a)
+
+av = [np.mean(abs(a[i, ::])) for i in range(n)]
+av = int(sum(av))
+fig, axs = plt.subplots(2, 2, figsize=(11, 9))
+x = list(range(1, n+1))
+for j in range (n):
+    y = list(a[j, ::])
+
+    axs[0, 0].plot(x, y, ".-", label=f"{j} строка.")
+    axs[0, 0].set(title="График с использование финкции plot:", xlabel="Номер элемента в строке", ylabel="Значение элемента")
+    axs[0, 0].grid()
+
+    axs[0, 1].bar(x, y, 0.4, label=f"{j} строка.")
+    axs[0, 1].set(title="График с использование финкции bar:", xlabel="Номер элемента в строке", ylabel="Значение элемента")
+    if n<=10:
+        axs[0, 0].legend(loc="lower right")
+        axs[0, 1].legend(loc="lower right")
+
+explode = [0]*(n-1)
+explode.append(0.1)
+sizes = [round((np.mean(abs(a[i, ::])) + 100)/av, 1) for i in range(n)]
+axs[1, 0].set_title("График с использованием функции pie:", verticalalignment='top')
+axs[1, 0].pie(sizes, labels=list(range(1, n+1)), explode=explode, autopct="%1.1f%%", shadow=True)
+
+axs[1, 1].axis("off")
+
+plt.show()
